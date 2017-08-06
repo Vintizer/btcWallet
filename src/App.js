@@ -84,13 +84,15 @@ class App extends Component {
       }
     })
 
-    var tx = new bitcoin.TransactionBuilder(network);
+    var tx = new bitcoin.TransactionBuilder();
     txResArr.forEach((e) => {
       tx.addInput(e, 0);
     })
-    // tx.addOutput(addressTo, amountToSend);
-    // var keyPair = bitcoin.ECPair.fromWIF(this.state.privatKey, network);
-    // tx.sign(0, keyPair);
+    console.log(addressTo);
+    console.log(amountToSend);
+    tx.addOutput(addressTo, amountToSend);
+    var keyPair = bitcoin.ECPair.fromWIF(this.state.privatKey, network);
+    tx.sign(0, keyPair);
     // console.log(tx.build().toHex());
     console.log(tx);
   }
