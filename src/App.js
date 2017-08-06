@@ -20,6 +20,7 @@ class App extends Component {
     this.generateAddress = this.generateAddress.bind(this);
     this.registerWIF = this.registerWIF.bind(this);
     this.getBalance = this.getBalance.bind(this);
+    this.sendBTC = this.sendBTC.bind(this);
   }
   generateAddress() {
     var that = this;
@@ -35,15 +36,13 @@ class App extends Component {
   registerWIF() {
     var that = this;
     var network = bitcoin.networks[CONST.network];
-    if (bitcoin.ECPair.fromWIF(document.getElementById('privat_key').value, network)) {
-      var keyPair = bitcoin.ECPair.fromWIF(document.getElementById('privat_key').value, network);
+    var keyPair = bitcoin.ECPair.fromWIF(document.getElementById('privat_key').value, network);
 
-      that.setState({
-        "wallet": keyPair.getAddress(),
-        "privatKey": keyPair.toWIF(),
-        "publicKey": keyPair.getPublicKeyBuffer()
-      })
-    }
+    that.setState({
+      "wallet": keyPair.getAddress(),
+      "privatKey": keyPair.toWIF(),
+      "publicKey": keyPair.getPublicKeyBuffer()
+    })
   }
   getBalance() {
     var stringRequestBalance = CONST.ip + "/api/addr/" + this.state.wallet + "/balance";
@@ -64,6 +63,49 @@ class App extends Component {
           "unconfirmedBalance": val + " unconfirmed balance"
         })
       })
+  }
+  send(utxoArr, addressTo, amountToSend, network) {
+    if (!amountToSend || !addressTo) {
+      return;
+    }
+    var inpArrAmount = [];
+    var inpArrId = [];
+    utxoArr.forEach((e) => {
+      inpArrAmount.push(e.satoshis);
+      inpArrId.push(e.txid);
+    });
+    var sumAmount = 0;
+    var txResArr = [];
+    inpArrAmount.forEach((e, i) => {
+      if (sumAmount < amountToSend) {
+        sumAmount += e;
+        txResArr.push(inpArrId[i]);
+      }
+    })
+
+    var tx = new bitcoin.TransactionBuilder(bitcoin.networks[CONST.network]);
+    txResArr.forEach((e) => {
+      tx.addInput(e, 0);
+    })
+    // tx.addOutput(addressTo, amountToSend);
+    // var keyPair = bitcoin.ECPair.fromWIF(this.state.privatKey, network);
+    // tx.sign(0, keyPair);
+    // console.log(tx.build().toHex());
+    console.log(tx);
+  }
+  sendBTC() {
+    var that = this;
+    var network = bitcoin.networks[CONST.network];
+    var addressTo = document.getElementById('send_address').value;
+    var amoutToSend = document.getElementById('send_BTC').value;
+    var stringGetUtxo = CONST.ip + "/api/addr/" + this.state.wallet + "/utxo";
+    fetch(stringGetUtxo)
+      .then((res) => {
+        return res.json();
+      }).then((val) => {
+        this.send(val, addressTo, amoutToSend, network);
+      })
+
 
   }
   render() {
@@ -86,12 +128,14 @@ class App extends Component {
         <div className="balance">
           <Balance
             getBalance={this.getBalance}
-            balance = {this.state.balance}
-            unconfirmedBalance = {this.state.unconfirmedBalance}
+            balance={this.state.balance}
+            unconfirmedBalance={this.state.unconfirmedBalance}
           />
         </div>
         <div className="sender">
-          <Sender />
+          <Sender
+            sendBTC={this.sendBTC}
+          />
         </div>
       </div>
     );

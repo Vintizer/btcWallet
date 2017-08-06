@@ -7,7 +7,7 @@ class Sender extends Component {
             <div>
                 Отправить <input type='text' placeholder="send BTC" id="send_BTC" /> <br /> ВТС на адрес
                 <input type='text' placeholder="send address" id="send_address" /> <br />
-                <button onClick={this.getBalance}> Отправить </button> <br />
+                <button onClick={this.props.sendBTC}> Отправить </button> <br />
             </div>
         );
     }
