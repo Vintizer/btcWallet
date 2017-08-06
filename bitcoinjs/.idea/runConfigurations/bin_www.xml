@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="bin/www" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="$USER_HOME$/.nvm/versions/node/v4.8.4/bin/node" path-to-js-file="$USER_HOME$/WebstormProjects/node/bitcoinjs/bin/www" working-dir="$USER_HOME$/WebstormProjects/node/bitcoinjs">
+    <envs>
+      <env name="DEBUG" value="untitled:*" />
+    </envs>
+    <browser url="http://localhost:3000/" />
+    <method />
+  </configuration>
+</component>
