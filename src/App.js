@@ -64,10 +64,11 @@ class App extends Component {
         })
       })
   }
-  send(utxoArr, addressTo, amountToSend, network) {
+  send(utxoArr, addressTo, amountToSend) {
     if (!amountToSend || !addressTo) {
       return;
     }
+    var network = bitcoin.networks[CONST.network];
     var inpArrAmount = [];
     var inpArrId = [];
     utxoArr.forEach((e) => {
@@ -83,7 +84,7 @@ class App extends Component {
       }
     })
 
-    var tx = new bitcoin.TransactionBuilder(bitcoin.networks[CONST.network]);
+    var tx = new bitcoin.TransactionBuilder(network);
     txResArr.forEach((e) => {
       tx.addInput(e, 0);
     })
@@ -95,7 +96,7 @@ class App extends Component {
   }
   sendBTC() {
     var that = this;
-    var network = bitcoin.networks[CONST.network];
+    
     var addressTo = document.getElementById('send_address').value;
     var amoutToSend = document.getElementById('send_BTC').value;
     var stringGetUtxo = CONST.ip + "/api/addr/" + this.state.wallet + "/utxo";
@@ -103,7 +104,7 @@ class App extends Component {
       .then((res) => {
         return res.json();
       }).then((val) => {
-        this.send(val, addressTo, amoutToSend, network);
+        this.send(val, addressTo, amoutToSend);
       })
 
 
