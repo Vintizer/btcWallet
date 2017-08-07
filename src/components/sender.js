@@ -6,9 +6,9 @@ class Sender extends Component {
         return (
             <div>
                 Отправить <input type='text' placeholder="send BTC" id="send_BTC" /> <br /> ВТС на адрес
-                <input type='text' placeholder="send address" id="send_address" value = "muPxtF8g3WVWGNcNw1tVoaZMq56dCbjBSX"/> <br />
+                <input type='text' placeholder="send address" id="send_address" value = "n3SLphtGp3GwrTsLC2ZFH6XH3sHtixvziH"/> <br />
                 <button onClick={this.props.sendBTC}> Отправить </button> <br />
-                {this.props.txID ? `Номер транзакции ${this.props.txID}` : null}
+                {this.props.txId ? `Номер транзакции ${this.props.txId}` : null}
             </div>
         );
     }

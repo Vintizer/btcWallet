@@ -7,6 +7,10 @@ import bitcoin from "bitcoinjs-lib";
 import CONST from "./constants/const.json";
 import './App.css';
 
+// Адрес кошелька: n3SLphtGp3GwrTsLC2ZFH6XH3sHtixvziH 
+// Публичный ключ: 217013213619915422249847127520109904218256571481116785301751618624910810123678123 
+// Приватный ключ: cS9NhbNJU3ArPKSGghMnvojxcSBr5jJbRjVV6u8qod8WbYC8uLvi 
+
 class App extends Component {
   constructor() {
     super();
@@ -46,8 +50,8 @@ class App extends Component {
     })
   }
   getBalance() {
-    var stringRequestBalance = CONST.ip + "/api/addr/" + this.state.wallet + "/balance";
-    var stringRequestUnconfirmedBalance = CONST.ip + "/api/addr/" + this.state.wallet + "/unconfirmedBalance";
+    var stringRequestBalance = CONST.ip + "/addr/" + this.state.wallet + "/balance";
+    var stringRequestUnconfirmedBalance = CONST.ip + "/addr/" + this.state.wallet + "/unconfirmedBalance";
     fetch(stringRequestBalance)
       .then((res) => {
         return res.json();
@@ -69,6 +73,7 @@ class App extends Component {
     if (!amountToSend || !addressTo) {
       return;
     }
+    var that = this;
     var network = bitcoin.networks[CONST.network];
     var inpArrAmount = [];
     var inpArrId = [];
@@ -94,24 +99,26 @@ class App extends Component {
     tx.sign(0, keyPair);
     const hexTxId = { rawtx: tx.build().toHex() };
     console.log(hexTxId);
-    fetch(CONST.ip + "/api/tx/send", {
+    fetch(CONST.ip + "/tx/send", {
       method: 'post',
       body: hexTxId
     })
       .then((res) => {
-        console.log(res);
-        return res.json();
+        that.setState({
+          "txId": res.statusText
+        })
+        // return res.json();
       })
-      .then((val) => {
-        console.log(val);
-        this.state.txId = val;
-      })
+      // .then((val) => {
+      //   console.log(val);
+      //   this.state.txId = val;
+      // })
   }
   sendBTC() {
     var that = this;
     var addressTo = document.getElementById('send_address').value;
     var amoutToSend = document.getElementById('send_BTC').value;
-    var stringGetUtxo = CONST.ip + "/api/addr/" + this.state.wallet + "/utxo";
+    var stringGetUtxo = CONST.ip + "/addr/" + this.state.wallet + "/utxo";
     fetch(stringGetUtxo)
       .then((res) => {
         return res.json();
