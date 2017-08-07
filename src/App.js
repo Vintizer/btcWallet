@@ -15,7 +15,8 @@ class App extends Component {
       "publicKey": "",
       "privatKey": "",
       "balance": "",
-      "unconfirmedBalance": ""
+      "unconfirmedBalance": "",
+      "txId": ""
     };
     this.generateAddress = this.generateAddress.bind(this);
     this.registerWIF = this.registerWIF.bind(this);
@@ -65,7 +66,6 @@ class App extends Component {
       })
   }
   send(utxoArr, addressTo, amountToSend) {
-    console.log(utxoArr);
     if (!amountToSend || !addressTo) {
       return;
     }
@@ -92,7 +92,20 @@ class App extends Component {
     tx.addOutput(addressTo, parseFloat(amountToSend));
     var keyPair = bitcoin.ECPair.fromWIF(this.state.privatKey, network);
     tx.sign(0, keyPair);
-    console.log(tx.build().toHex());
+    const hexTxId = { rawtx: tx.build().toHex() };
+    console.log(hexTxId);
+    fetch(CONST.ip + "/api/tx/send", {
+      method: 'post',
+      body: hexTxId
+    })
+      .then((res) => {
+        console.log(res);
+        return res.json();
+      })
+      .then((val) => {
+        console.log(val);
+        this.state.txId = val;
+      })
   }
   sendBTC() {
     var that = this;
@@ -135,6 +148,7 @@ class App extends Component {
         <div className="sender">
           <Sender
             sendBTC={this.sendBTC}
+            txId={this.state.txId}
           />
         </div>
       </div>
