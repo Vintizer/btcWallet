@@ -7,10 +7,43 @@ import bitcoin from "bitcoinjs-lib";
 import CONST from "./constants/const.json";
 import './App.css';
 import axios from "axios";
+import bip39 from "bip39";
 
 // Адрес кошелька: n3SLphtGp3GwrTsLC2ZFH6XH3sHtixvziH 
 // Публичный ключ: 217013213619915422249847127520109904218256571481116785301751618624910810123678123 
 // Приватный ключ: cS9NhbNJU3ArPKSGghMnvojxcSBr5jJbRjVV6u8qod8WbYC8uLvi 
+
+
+
+const fromSeed = () => {
+  var network = bitcoin.networks[CONST.network];
+  const seed = "a3580f8f87e6b59b80df424d63e137ff884866d8866737d3ef8a8b149bfe9749f88876e3366e7409831067239be2667eed60d70f3a3818756baf9444350a3bba";
+
+  var root = bitcoin.HDNode.fromSeedHex(seed, network);
+  var child = root.derivePath("m/44'/1'/0'/0/0");
+  var child2 = root.derivePath("m/0'/0/1");
+console.log('child');
+  console.log(child.getAddress());
+  console.log(child2.getAddress());
+}
+
+window.fromSeed = fromSeed;
+
+
+fromSeed();
+const fromMnemonic = () => {
+  var network = bitcoin.networks[CONST.network];
+  const seedFraze = "yard impulse luxury drive today throw farm pepper survey wreck glass federal";
+  var seed = bip39.mnemonicToSeed(seedFraze);
+var root = bitcoin.HDNode.fromSeedHex(seed, network);
+  var child = root.derivePath("m/44'/1'/0'/0/0");
+  var child2 = root.derivePath("m/0'/0/1");
+console.log('child');
+  console.log(child.getAddress());
+  console.log(child2.getAddress());
+
+}
+window.fromMnemonic = fromMnemonic;
 const ip = CONST.ipLocal;
 class App extends Component {
   constructor() {
