@@ -22,7 +22,7 @@ const fromSeed = () => {
   var root = bitcoin.HDNode.fromSeedHex(seed, network);
   var child = root.derivePath("m/44'/1'/0'/0/0");
   var child2 = root.derivePath("m/0'/0/1");
-console.log('child');
+  console.log('child');
   console.log(child.getAddress());
   console.log(child2.getAddress());
 }
@@ -35,10 +35,10 @@ const fromMnemonic = () => {
   var network = bitcoin.networks[CONST.network];
   const seedFraze = "yard impulse luxury drive today throw farm pepper survey wreck glass federal";
   var seed = bip39.mnemonicToSeed(seedFraze);
-var root = bitcoin.HDNode.fromSeedHex(seed, network);
+  var root = bitcoin.HDNode.fromSeedHex(seed, network);
   var child = root.derivePath("m/44'/1'/0'/0/0");
   var child2 = root.derivePath("m/0'/0/1");
-console.log('child');
+  console.log('child');
   console.log(child.getAddress());
   console.log(child2.getAddress());
 
@@ -139,9 +139,9 @@ class App extends Component {
     const hexTxId = { "rawtx": tx.build().toHex() };
     axios.post(ip + "/tx/send", hexTxId)
       .then(function (response) {
-          that.setState({
-            "txId": response.data.txid
-          })
+        that.setState({
+          "txId": response.data.txid
+        })
         console.log("axios");
         console.log(response);
       })
