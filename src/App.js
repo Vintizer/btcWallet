@@ -11,7 +11,7 @@ import axios from "axios";
 // Адрес кошелька: n3SLphtGp3GwrTsLC2ZFH6XH3sHtixvziH 
 // Публичный ключ: 217013213619915422249847127520109904218256571481116785301751618624910810123678123 
 // Приватный ключ: cS9NhbNJU3ArPKSGghMnvojxcSBr5jJbRjVV6u8qod8WbYC8uLvi 
-const ip = CONST.ipOut;
+const ip = CONST.ipLocal;
 class App extends Component {
   constructor() {
     super();
@@ -79,11 +79,14 @@ class App extends Component {
     var inpArrAmount = [];
     var inpArrId = [];
     utxoArr.forEach((e) => {
+      // console.log(e);
       inpArrAmount.push(e.satoshis);
       inpArrId.push(e.txid);
     });
     var sumAmount = 0;
     var txResArr = [];
+    console.log("inpArrAmount")
+    console.log(inpArrAmount)
     inpArrAmount.forEach((e, i) => {
       if (sumAmount < amountToSend) {
         sumAmount += e;
@@ -92,30 +95,33 @@ class App extends Component {
     })
 
     var tx = new bitcoin.TransactionBuilder(network);
+    console.log(txResArr);
     txResArr.forEach((e) => {
       tx.addInput(e, 0);
     })
     tx.addOutput(addressTo, parseFloat(amountToSend));
     var keyPair = bitcoin.ECPair.fromWIF(this.state.privatKey, network);
     tx.sign(0, keyPair);
-    const hexTxId = { rawtx: tx.build().toHex() };
-    console.log(hexTxId);
+    console.log(tx.build().toHex());
+    const hexTxId = { "rawtx": tx.build().toHex() };
     axios.post(ip + "/tx/send", hexTxId)
       .then(function (response) {
-
+          that.setState({
+            "txId": response.data.txid
+          })
         console.log("axios");
         console.log(response);
       })
-    fetch(ip + "/tx/send", {
-      method: 'post',
-      body: hexTxId
-    })
-      .then((res) => {
-        that.setState({
-          "txId": res.statusText
-        })
-    // return res.json();
-    })
+    // fetch(ip + "/tx/send", {
+    //   method: 'post',
+    //   body: hexTxId
+    // })
+    //   .then((res) => {
+    //     that.setState({
+    //       "txId": res.statusText
+    //     })
+    // // return res.json();
+    // })
     // .then((val) => {
     //   console.log(val);
     //   this.state.txId = val;
