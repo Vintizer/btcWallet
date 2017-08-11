@@ -8,6 +8,8 @@ import CONST from "./constants/const.json";
 import './App.css';
 import axios from "axios";
 import bip39 from "bip39";
+import BigInteger from "bigi";
+var Mnemonic = require('bitcore-mnemonic');
 
 // Адрес кошелька: n3SLphtGp3GwrTsLC2ZFH6XH3sHtixvziH 
 // Публичный ключ: 217013213619915422249847127520109904218256571481116785301751618624910810123678123 
@@ -15,35 +17,8 @@ import bip39 from "bip39";
 
 
 
-const fromSeed = () => {
-  var network = bitcoin.networks[CONST.network];
-  const seed = "a3580f8f87e6b59b80df424d63e137ff884866d8866737d3ef8a8b149bfe9749f88876e3366e7409831067239be2667eed60d70f3a3818756baf9444350a3bba";
-
-  var root = bitcoin.HDNode.fromSeedHex(seed, network);
-  var child = root.derivePath("m/44'/1'/0'/0/0");
-  var child2 = root.derivePath("m/0'/0/1");
-  console.log('child');
-  console.log(child.getAddress());
-  console.log(child2.getAddress());
-}
-
-window.fromSeed = fromSeed;
 
 
-fromSeed();
-const fromMnemonic = () => {
-  var network = bitcoin.networks[CONST.network];
-  const seedFraze = "yard impulse luxury drive today throw farm pepper survey wreck glass federal";
-  var seed = bip39.mnemonicToSeed(seedFraze);
-  var root = bitcoin.HDNode.fromSeedHex(seed, network);
-  var child = root.derivePath("m/44'/1'/0'/0/0");
-  var child2 = root.derivePath("m/0'/0/1");
-  console.log('child');
-  console.log(child.getAddress());
-  console.log(child2.getAddress());
-
-}
-window.fromMnemonic = fromMnemonic;
 const ip = CONST.ipLocal;
 class App extends Component {
   constructor() {
@@ -54,24 +29,46 @@ class App extends Component {
       "privatKey": "",
       "balance": "",
       "unconfirmedBalance": "",
-      "txId": ""
+      "txId": "",
+      "mnemonic": "",
+      "receiveAddress": "",
+      "userAddress": ""
     };
     this.generateAddress = this.generateAddress.bind(this);
     this.registerWIF = this.registerWIF.bind(this);
     this.getBalance = this.getBalance.bind(this);
     this.sendBTC = this.sendBTC.bind(this);
   }
-  generateAddress() {
-    var that = this;
-    var network = bitcoin.networks[CONST.network];
-    var keyPair = bitcoin.ECPair.makeRandom({ network });
-
-    that.setState({
-      "wallet": keyPair.getAddress(),
-      "privatKey": keyPair.toWIF(),
-      "publicKey": keyPair.getPublicKeyBuffer()
-    })
+  getMnemonic = () => {
+    return new Mnemonic(Mnemonic.Words.ENGLISH).toString();
   }
+
+  generateAddress() {
+    var network = bitcoin.networks[CONST.network];
+    const seedFraze = this.getMnemonic();
+    this.setState({
+      "mnemonic": seedFraze
+    })
+    var seed = bip39.mnemonicToSeed(seedFraze);
+
+    var root = bitcoin.HDNode.fromSeedHex(seed, network);
+
+    var external = root.derivePath("m/44'/1'/0'/0/0");
+    var internal = root.derivePath("m/44'/1'/0'/1/0");
+
+
+    // var that = this;
+    // var network = bitcoin.networks[CONST.network];
+    // var keyPair = bitcoin.ECPair.makeRandom({ network });
+
+    // that.setState({
+    //   "wallet": keyPair.getAddress(),
+    //   "privatKey": keyPair.toWIF(),
+    //   "publicKey": keyPair.getPublicKeyBuffer()
+    // })
+  };
+
+
   registerWIF() {
     var that = this;
     var network = bitcoin.networks[CONST.network];
@@ -145,20 +142,6 @@ class App extends Component {
         console.log("axios");
         console.log(response);
       })
-    // fetch(ip + "/tx/send", {
-    //   method: 'post',
-    //   body: hexTxId
-    // })
-    //   .then((res) => {
-    //     that.setState({
-    //       "txId": res.statusText
-    //     })
-    // // return res.json();
-    // })
-    // .then((val) => {
-    //   console.log(val);
-    //   this.state.txId = val;
-    // })
   }
   sendBTC() {
     var addressTo = document.getElementById('send_address').value;
@@ -179,6 +162,9 @@ class App extends Component {
             wallet={this.state.wallet}
             publicKey={this.state.publicKey}
             privatKey={this.state.privatKey}
+            mnemonic={this.state.mnemonic}
+            receiveAddress={this.state.receiveAddress}
+            userAddress={this.state.userAddress}
           />
         </div>
         <div className="keyWallet">
@@ -207,3 +193,45 @@ class App extends Component {
 }
 
 export default App;
+
+
+const createHDChain = () => {
+  var d = BigInteger.ONE
+  console.log(d);
+  const keyPair = new bitcoin.ECPair(d, null);
+
+  const chainCode = Buffer.alloc(32, 1);
+  console.log(chainCode);
+  var hd = new bitcoin.HDNode.makeRandom();
+  console.log(hd.getAddress());
+};
+window.createHDChain = createHDChain;
+
+const fromSeed = () => {
+  var network = bitcoin.networks[CONST.network];
+  const seed = "a3580f8f87e6b59b80df424d63e137ff884866d8866737d3ef8a8b149bfe9749f88876e3366e7409831067239be2667eed60d70f3a3818756baf9444350a3bba";
+
+  var root = bitcoin.HDNode.fromSeedHex(seed, network);
+
+  var child = root.derivePath("m/44'/1'/0'/0/0");
+  var child2 = root.derivePath("m/0'/0/1");
+  console.log('child');
+  console.log(child.getAddress());
+  console.log(child2.getAddress());
+}
+
+window.fromSeed = fromSeed;
+
+const fromMnemonic = () => {
+  var network = bitcoin.networks[CONST.network];
+  const seedFraze = "yard impulse luxury drive today throw farm pepper survey wreck glass federal";
+  var seed = bip39.mnemonicToSeed(seedFraze);
+  var root = bitcoin.HDNode.fromSeedHex(seed, network);
+  var child = root.derivePath("m/44'/1'/0'/0/0");
+  var child2 = root.derivePath("m/0'/0/1");
+  console.log('child');
+  console.log(child.getAddress());
+  console.log(child2.getAddress());
+
+}
+window.fromMnemonic = fromMnemonic;
