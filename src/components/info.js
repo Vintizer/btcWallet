@@ -9,6 +9,7 @@ class Info extends Component {
         Адрес кошелька: <label>{this.props.wallet}</label> <br/>
         Публичный ключ: <label>{this.props.publicKey}</label> <br/>
         Приватный ключ: <label>{this.props.privatKey}</label> <br/>
+        Мнемофраза: <label>{this.props.mnemonic}</label> <br/>
       </div>
     );
   }
