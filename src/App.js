@@ -8,6 +8,7 @@ import Info from "./components/info";
 import bitcoin from "bitcoinjs-lib";
 import bip39 from "bip39";
 import Mnemonic from "bitcore-mnemonic";
+import axios from "axios";
 
 const ip = CONST.ipOut;
 class App extends Component {
@@ -32,11 +33,153 @@ class App extends Component {
     };
     this.generateAddress = this.generateAddress.bind(this);
     this.registerMnemonic = this.registerMnemonic.bind(this);
-    this.getBalance = this.getBalance.bind(this);
     this.sendBTC = this.sendBTC.bind(this);
     this.generateReceiveAddress = this.generateReceiveAddress.bind(this);
     this.generateSendAddress = this.generateSendAddress.bind(this);
     this.getFullUtxo = this.getFullUtxo.bind(this);
+    this.getTransactions = this.getTransactions.bind(this);
+  }
+  isGoodAddress(address) {
+    return true;
+  }
+  findFirstUnused() {
+    const root = this.state.root;
+    let addrAdd = 0;
+    let answer;
+    do {
+      const pathDerive = "m/44'/1'/0'/0/" + addrAdd;
+      const address = root.derivePath(pathDerive).getAddress();
+      answer = this.isGoodAddress(address);
+      addrAdd++;
+    } while (!answer);
+    const pathDerive = "m/44'/1'/0'/0/" + addrAdd;
+    const address = root.derivePath(pathDerive).getAddress();
+    return address;
+  }
+  getUtxoArr(baseArr, amountToSend) {
+    const that = this;
+    const network = bitcoin.networks[CONST.network];
+    const inpArrAmount = [];
+    const inpArrId = [];
+    let sumAmount = 0;
+    let txSatoshi = 0;
+    const txResArr = [];
+    const txSatoshiArr = [];
+    baseArr.forEach((e) => {
+      inpArrAmount.push(e.satoshis);
+      inpArrId.push(e.txid);
+    });
+    inpArrAmount.forEach((e, i) => {
+      if (sumAmount < amountToSend) {
+        sumAmount += e;
+        txResArr.push(inpArrId[i]);
+        txSatoshiArr.push(e);
+      }
+    })
+    txSatoshiArr.forEach((e) => {
+      txSatoshi += e;
+    })
+    return {
+      txResArr,
+      txSatoshi
+    };
+  }
+  getFee() {
+    return 1000;
+  }
+  baseAmount() {
+    return 1500;
+  }
+  send(utxoArr, addressTo, amountToSend, addrMyFirstUnused) {
+    if (!amountToSend || !addressTo) {
+      return;
+    }
+    const { txResArr, txSatoshi } = this.getUtxoArr(utxoArr, amountToSend);
+    const network = bitcoin.networks[CONST.network];
+    const tx = new bitcoin.TransactionBuilder(network);
+    txResArr.forEach((e) => {
+      tx.addInput(e, 0);
+    })
+    const fee = this.getFee();
+    const baseAmount = this.baseAmount();
+    tx.addOutput(addressTo, parseFloat(amountToSend));
+    // if (txSatoshi - fee - amountToSend > baseAmount){
+    //   tx.addOutput(addrMyFirstUnused, parseFloat(txSatoshi - fee - amountToSend));  
+    // }
+    // tx.addOutput(addressTo, parseFloat(amountToSend));
+
+    // var keyPair = bitcoin.ECPair.fromWIF(this.state.privatKey, network);
+
+    // tx.sign(0, keyPair);
+    // console.log(tx.build().toHex());
+    // const hexTxId = { "rawtx": tx.build().toHex() };
+    // axios.post(ip + "/tx/send", hexTxId)
+    //   .then(function (response) {
+    //     that.setState({
+    //       "txId": response.data.txid
+    //     })
+    //     console.log("axios");
+    //     console.log(response);
+    //   })
+  }
+  sendBTC() {
+    var addressTo = document.getElementById('send_address').value;
+    var amoutToSend = document.getElementById('send_BTC').value;
+    const addr = this.findFirstUnused();
+    var stringGetUtxo = ip + "/addr/" + addr + "/utxo";
+    fetch(stringGetUtxo)
+      .then((res) => {
+        return res.json();
+      }).then((val) => {
+        this.send(val, addressTo, amoutToSend, addr);
+      })
+  }
+  getTransactions() {
+    const that = this;
+    const gettransactionAddresses = (cb) => {
+
+
+
+
+      cb("n4PZwbeMVbSkumbr4jqdU7Q2mzpeYZRWJs,mqiwcZZV7ANpSmTJnH1maQWqgXfMRHRB1M," +
+      "mpDnSLhzxkj6t8QLRoBomSTWaFvsWUAAkq,mrg79MC15337GZi1CnVLAJ4t2VEdTm1gL4," +
+      "mjpVzF3uQR6h78w1tHWppKqvyk63WgYrQk,n3anwuRCNC4X5yCZFEpsJBNxcxu6K6Q5EK");
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    }
+    gettransactionAddresses((addresses) => {
+      axios.post(ip + "/addrs/txs", { "addrs": addresses })
+        .then((response) => {
+          console.log('response.data.totalItems', response.data.totalItems);
+          console.log('response.data.to', response.data.to);
+          if (response.data.totalItems > response.data.to) {
+            console.log('Inside');
+            axios.post(ip + "/addrs/txs", {
+              "addrs": addresses,
+              "from": 0,
+              "to": response.data.totalItems
+            })
+              .then((res) => {
+                console.log('response@');
+                console.log('response.data.items', res.data.items);
+                that.setState({
+                  "transactions": res.data.items,
+                })
+              })
+          } else {
+            that.setState({
+              "transactions": response.data.items,
+            })
+          }
+        })
+    });
   }
   getUtxo(address, cb) {
     const stringGetUtxo = ip + "/addr/" + address + "/utxo";
@@ -53,12 +196,10 @@ class App extends Component {
 
   }
   test20address(gen, cb) {
-    console.log('gen', gen);
     let res = 0;
     for (let i = 20 * (gen - 1); i < 20 * gen; i++) {
       const root = this.state.root;
       const pathDerive = "m/44'/1'/0'/0/" + i;
-      console.log(pathDerive);
       const address = root.derivePath(pathDerive).getAddress();
       this.getUtxo(address, (getRes) => {
         res += getRes;
@@ -71,13 +212,10 @@ class App extends Component {
   countUtxo(gen, fullUtxo, cb) {
     let localGen = gen;
     const tryUtxo = (res) => {
-      console.log('tryUtxo', res);
       if (res > 0) {
         fullUtxo += res;
-        console.log('inside res > 0');
         this.countUtxo(localGen + 1, fullUtxo, cb);
       } else {
-        console.log('return', fullUtxo);
         cb(fullUtxo);
       }
     }
@@ -86,7 +224,6 @@ class App extends Component {
 
   getFullUtxo() {
     this.countUtxo(1, 0, (res) => {
-      console.log('fullSRes!!!', res);
       this.setState({
         "utxo": res
       })
@@ -106,9 +243,6 @@ class App extends Component {
       "receiveAddress": arrReceive
     })
     const that = this;
-    setTimeout(function () {
-      console.log(that.state);
-    }, 850);
   }
   generateSendAddress() {
     const sendAddressCount = this.state.lastSendAddress + 1;
@@ -122,10 +256,6 @@ class App extends Component {
       "sendAddress": arrSend
     })
     const that = this;
-    setTimeout(function () {
-      console.log(that.state);
-    }, 850);
-
   }
   mnemonicRegister(seedFraze) {
     const network = bitcoin.networks[CONST.network];
@@ -136,6 +266,9 @@ class App extends Component {
       "root": root,
       "lastReceiveAddress": 0,
       "lastSendAddress": 0
+    }, ()=>{
+      this.getTransactions();
+      this.getFullUtxo();
     })
   }
   generateAddress() {
@@ -147,12 +280,6 @@ class App extends Component {
     if (seedFraze !== this.state.mnemonic) {
       this.mnemonicRegister(seedFraze);
     }
-  }
-  getBalance() {
-    alert("getBalance");
-  }
-  sendBTC() {
-    alert("sendBTC");
   }
   componentDidMount() {
     lightTabsFunction(jQuery);
@@ -189,6 +316,7 @@ class App extends Component {
                 transactions={this.state.transactions}
                 utxo={this.state.utxo}
                 getUtxo={this.getFullUtxo}
+                getTransactions={this.getTransactions}
               />
             </div>
             <div className="sender">

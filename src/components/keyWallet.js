@@ -24,7 +24,7 @@ class KeyWallet extends Component {
           {this.props.receiveAddress.map((address, index) => {
             return (
               <div key={index}>
-                <p className="address">{address}:</p>
+                <p className="address">{address}</p>
               </div>
             )
           })}
