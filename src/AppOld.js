@@ -3,10 +3,11 @@ import Info from './components/info';
 import KeyWallet from './components/keyWallet';
 import Balance from './components/balance';
 import Sender from './components/sender';
-import bitcoin from "bitcoinjs-lib";
+
 import CONST from "./constants/const.json";
 import './App.css';
 import axios from "axios";
+import bitcoin from "bitcoinjs-lib";
 import bip39 from "bip39";
 import BigInteger from "bigi";
 var Mnemonic = require('bitcore-mnemonic');
@@ -157,42 +158,42 @@ class App extends Component {
   render() {
     return
   }
-  // render() {
-  //   return (
-  //     <div>
-  //       <div className="info">
-  //         <Info
-  //           wallet={this.state.wallet}
-  //           publicKey={this.state.publicKey}
-  //           privatKey={this.state.privatKey}
-  //           mnemonic={this.state.mnemonic}
-  //           receiveAddress={this.state.receiveAddress}
-  //           userAddress={this.state.userAddress}
-  //         />
-  //       </div>
-  //       <div className="keyWallet">
-  //         <KeyWallet
-  //           registerWIF={this.registerWIF}
-  //           generateAddress={this.generateAddress}
-  //           privatKey={this.state.privatKey}
-  //         />
-  //       </div>
-  //       <div className="balance">
-  //         <Balance
-  //           getBalance={this.getBalance}
-  //           balance={this.state.balance}
-  //           unconfirmedBalance={this.state.unconfirmedBalance}
-  //         />
-  //       </div>
-  //       <div className="sender">
-  //         <Sender
-  //           sendBTC={this.sendBTC}
-  //           txId={this.state.txId}
-  //         />
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  render() {
+    return (
+      <div>
+        <div className="info">
+          <Info
+            wallet={this.state.wallet}
+            publicKey={this.state.publicKey}
+            privatKey={this.state.privatKey}
+            mnemonic={this.state.mnemonic}
+            receiveAddress={this.state.receiveAddress}
+            userAddress={this.state.userAddress}
+          />
+        </div>
+        <div className="keyWallet">
+          <KeyWallet
+            registerWIF={this.registerWIF}
+            generateAddress={this.generateAddress}
+            privatKey={this.state.privatKey}
+          />
+        </div>
+        <div className="balance">
+          <Balance
+            getBalance={this.getBalance}
+            balance={this.state.balance}
+            unconfirmedBalance={this.state.unconfirmedBalance}
+          />
+        </div>
+        <div className="sender">
+          <Sender
+            sendBTC={this.sendBTC}
+            txId={this.state.txId}
+          />
+        </div>
+      </div>
+    );
+  }
 }
 
 export default App;
