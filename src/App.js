@@ -9,7 +9,7 @@ import bitcoin from "bitcoinjs-lib";
 import bip39 from "bip39";
 import Mnemonic from "bitcore-mnemonic";
 
-const ip = CONST.ipLocal;
+const ip = CONST.ipOut;
 class App extends Component {
   constructor() {
     super();
@@ -25,7 +25,10 @@ class App extends Component {
       "sendAddress": [],
       "root": "",
       "lastReceiveAddress": 0,
-      "lastSendAddress": 0
+      "lastSendAddress": 0,
+      "transactions": [],
+      "utxo": "",
+      "countUtxo": 0
     };
     this.generateAddress = this.generateAddress.bind(this);
     this.registerMnemonic = this.registerMnemonic.bind(this);
@@ -33,7 +36,64 @@ class App extends Component {
     this.sendBTC = this.sendBTC.bind(this);
     this.generateReceiveAddress = this.generateReceiveAddress.bind(this);
     this.generateSendAddress = this.generateSendAddress.bind(this);
+    this.getFullUtxo = this.getFullUtxo.bind(this);
   }
+  getUtxo(address, cb) {
+    const stringGetUtxo = ip + "/addr/" + address + "/utxo";
+    let res = 0;
+    fetch(stringGetUtxo)
+      .then((res) => {
+        return res.json();
+      }).then((utxoArr) => {
+        utxoArr.forEach((e) => {
+          res += parseInt(e.satoshis);
+        });
+        cb(res);
+      })
+
+  }
+  test20address(gen, cb) {
+    console.log('gen', gen);
+    let res = 0;
+    for (let i = 20 * (gen - 1); i < 20 * gen; i++) {
+      const root = this.state.root;
+      const pathDerive = "m/44'/1'/0'/0/" + i;
+      console.log(pathDerive);
+      const address = root.derivePath(pathDerive).getAddress();
+      this.getUtxo(address, (getRes) => {
+        res += getRes;
+        if (i === (20 * gen) - 1) {
+          cb(res);
+        }
+      });
+    }
+  }
+  countUtxo(gen, fullUtxo, cb) {
+    let localGen = gen;
+    const tryUtxo = (res) => {
+      console.log('tryUtxo', res);
+      if (res > 0) {
+        fullUtxo += res;
+        console.log('inside res > 0');
+        this.countUtxo(localGen + 1, fullUtxo, cb);
+      } else {
+        console.log('return', fullUtxo);
+        cb(fullUtxo);
+      }
+    }
+    this.test20address(gen, tryUtxo);
+  }
+
+  getFullUtxo() {
+    this.countUtxo(1, 0, (res) => {
+      console.log('fullSRes!!!', res);
+      this.setState({
+        "utxo": res
+      })
+    })
+
+  }
+
   generateReceiveAddress() {
     const receiveAddressCount = this.state.lastReceiveAddress + 1;
     const root = this.state.root;
@@ -68,12 +128,14 @@ class App extends Component {
 
   }
   mnemonicRegister(seedFraze) {
-    var network = bitcoin.networks[CONST.network];
-    var seed = bip39.mnemonicToSeed(seedFraze);
-    var root = bitcoin.HDNode.fromSeedHex(seed, network);
+    const network = bitcoin.networks[CONST.network];
+    const seed = bip39.mnemonicToSeed(seedFraze);
+    const root = bitcoin.HDNode.fromSeedHex(seed, network);
     this.setState({
       "mnemonic": seedFraze,
-      "root": root
+      "root": root,
+      "lastReceiveAddress": 0,
+      "lastSendAddress": 0
     })
   }
   generateAddress() {
@@ -81,8 +143,10 @@ class App extends Component {
     this.mnemonicRegister(seedFraze);
   };
   registerMnemonic() {
-    const seedFraze = document.getElementById('mnemonic').value;
-    this.mnemonicRegister(seedFraze);
+    const seedFraze = document.getElementById('mnemonic').value.trim();
+    if (seedFraze !== this.state.mnemonic) {
+      this.mnemonicRegister(seedFraze);
+    }
   }
   getBalance() {
     alert("getBalance");
@@ -122,12 +186,9 @@ class App extends Component {
             </div>
             <div className="info">
               <Info
-                wallet={this.state.wallet}
-                publicKey={this.state.publicKey}
-                privatKey={this.state.privatKey}
-                mnemonic={this.state.mnemonic}
-                receiveAddress={this.state.receiveAddress}
-                userAddress={this.state.userAddress}
+                transactions={this.state.transactions}
+                utxo={this.state.utxo}
+                getUtxo={this.getFullUtxo}
               />
             </div>
             <div className="sender">

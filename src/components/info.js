@@ -5,11 +5,10 @@ class Info extends Component {
   render() {
     return (
       <div>
-        Текущие ключи, с которыми ведется работа <br/>
-        Адрес кошелька: <label>{this.props.wallet}</label> <br/>
-        Публичный ключ: <label>{this.props.publicKey}</label> <br/>
-        Приватный ключ: <label>{this.props.privatKey}</label> <br/>
-        Мнемофраза: <label>{this.props.mnemonic}</label> <br/>
+        Текущие ключи, с которыми ведется работа <br />
+        Количество сатоши на кошельке - {this.props.utxo} Sat<br />
+        Количество биткоинов на кошельке - {this.props.utxo/100000000} BTC<br />
+        <button onClick={this.props.getUtxo}> getUtxo </button>
       </div>
     );
   }
