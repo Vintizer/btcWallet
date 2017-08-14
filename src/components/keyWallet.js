@@ -21,13 +21,9 @@ class KeyWallet extends Component {
 
         <div>
           Текущие адреса на получение:
-          {this.props.receiveAddress.map((address, index) => {
-            return (
-              <div key={index}>
-                <p className="address">{address}</p>
-              </div>
-            )
-          })}
+          <div>
+            <p className="address">!!-{this.props.newAddressReceive}</p>
+          </div>
         </div>
         <div>
           Текущие адреса:
