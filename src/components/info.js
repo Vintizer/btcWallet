@@ -3,7 +3,6 @@ import './info.css';
 
 class Info extends Component {
   render() {
-    console.log('this.props.transactions',this.props.transactions);
     return (
       <div>
         Текущие ключи, с которыми ведется работа <br />

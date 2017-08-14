@@ -111,15 +111,12 @@ class App extends Component {
     // var keyPair = bitcoin.ECPair.fromWIF(this.state.privatKey, network);
 
     // tx.sign(0, keyPair);
-    // console.log(tx.build().toHex());
     // const hexTxId = { "rawtx": tx.build().toHex() };
     // axios.post(ip + "/tx/send", hexTxId)
     //   .then(function (response) {
     //     that.setState({
     //       "txId": response.data.txid
     //     })
-    //     console.log("axios");
-    //     console.log(response);
     //   })
   }
   sendBTC() {
@@ -142,33 +139,33 @@ class App extends Component {
 
 
       cb("n4PZwbeMVbSkumbr4jqdU7Q2mzpeYZRWJs,mqiwcZZV7ANpSmTJnH1maQWqgXfMRHRB1M," +
-      "mpDnSLhzxkj6t8QLRoBomSTWaFvsWUAAkq,mrg79MC15337GZi1CnVLAJ4t2VEdTm1gL4," +
-      "mjpVzF3uQR6h78w1tHWppKqvyk63WgYrQk,n3anwuRCNC4X5yCZFEpsJBNxcxu6K6Q5EK");
-    
-    
-    
-    
-    
-    
-    
-    
-    
+        "mpDnSLhzxkj6t8QLRoBomSTWaFvsWUAAkq,mrg79MC15337GZi1CnVLAJ4t2VEdTm1gL4," +
+        "mjpVzF3uQR6h78w1tHWppKqvyk63WgYrQk,n3anwuRCNC4X5yCZFEpsJBNxcxu6K6Q5EK");
+
+
+
+
+
+
+
+
+
     }
     gettransactionAddresses((addresses) => {
       axios.post(ip + "/addrs/txs", { "addrs": addresses })
         .then((response) => {
-          console.log('response.data.totalItems', response.data.totalItems);
-          console.log('response.data.to', response.data.to);
+          // console.log('response.data.totalItems', response.data.totalItems);
+          // console.log('response.data.to', response.data.to);
           if (response.data.totalItems > response.data.to) {
-            console.log('Inside');
+            // console.log('Inside');
             axios.post(ip + "/addrs/txs", {
               "addrs": addresses,
               "from": 0,
               "to": response.data.totalItems
             })
               .then((res) => {
-                console.log('response@');
-                console.log('response.data.items', res.data.items);
+                // console.log('response@');
+                // console.log('response.data.items', res.data.items);
                 that.setState({
                   "transactions": res.data.items,
                 })
@@ -181,54 +178,78 @@ class App extends Component {
         })
     });
   }
-  getUtxo(address, cb) {
-    const stringGetUtxo = ip + "/addr/" + address + "/utxo";
+
+  getTrans(address, cb) {
+    const stringGetTrans = ip + "/txs/?address=" + address;
     let res = 0;
-    fetch(stringGetUtxo)
+    fetch(stringGetTrans)
       .then((res) => {
         return res.json();
       }).then((utxoArr) => {
-        utxoArr.forEach((e) => {
-          res += parseInt(e.satoshis);
-        });
-        cb(res);
+        if (utxoArr.txs.length) {
+          cb(true);
+        }
+        cb(false);
       })
-
   }
+
   test20address(gen, cb) {
     let res = 0;
+    let transCount = 0;
+    let sumAddress = [];
     for (let i = 20 * (gen - 1); i < 20 * gen; i++) {
       const root = this.state.root;
       const pathDerive = "m/44'/1'/0'/0/" + i;
       const address = root.derivePath(pathDerive).getAddress();
-      this.getUtxo(address, (getRes) => {
-        res += getRes;
-        if (i === (20 * gen) - 1) {
-          cb(res);
+      sumAddress.push(address);
+    }
+    const stringGetTrans = ip + "/addrs/" + sumAddress.join(",") + "/txs";
+    fetch(stringGetTrans)
+      .then((res) => {
+        return res.json();
+      }).then((utxoArr) => {
+        if (utxoArr.totalItems > 0) {
+          this.test20address(gen + 1, cb);
+        } else {
+          cb(20 * (gen - 1));
         }
-      });
-    }
+      })
   }
-  countUtxo(gen, fullUtxo, cb) {
-    let localGen = gen;
-    const tryUtxo = (res) => {
-      if (res > 0) {
-        fullUtxo += res;
-        this.countUtxo(localGen + 1, fullUtxo, cb);
-      } else {
-        cb(fullUtxo);
+  getUtxoForCount(count, cb) {
+    if (count === 0) {
+      cb("0");
+    } else {
+      let sumAddress = [];
+      for (let i = 0; i < count; i++) {
+        const root = this.state.root;
+        const pathDerive = "m/44'/1'/0'/0/" + i;
+        const address = root.derivePath(pathDerive).getAddress();
+        sumAddress.push(address);
       }
+      const stringGetUtxo = ip + "/addrs/" + sumAddress.join(",") + "/utxo";
+      fetch(stringGetUtxo)
+        .then((res) => {
+          return res.json();
+        }).then((utxoArr) => {
+          let sum = 0;
+          utxoArr.forEach((e) => {
+            console.log('e.satoshis', e.satoshis);
+            sum += e.satoshis;
+          })
+          console.log('sum', sum);
+          cb(sum);
+        })
     }
-    this.test20address(gen, tryUtxo);
   }
-
   getFullUtxo() {
-    this.countUtxo(1, 0, (res) => {
-      this.setState({
-        "utxo": res
+    const that = this;
+    that.test20address(1, (count) => {
+      that.getUtxoForCount(count, (sum) => {
+        that.setState({
+          "utxo": sum
+        })
       })
     })
-
   }
 
   generateReceiveAddress() {
@@ -266,7 +287,7 @@ class App extends Component {
       "root": root,
       "lastReceiveAddress": 0,
       "lastSendAddress": 0
-    }, ()=>{
+    }, () => {
       this.getTransactions();
       this.getFullUtxo();
     })
