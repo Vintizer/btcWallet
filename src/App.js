@@ -14,9 +14,10 @@ import getTransactionsModule from "./scripts/gettransactions";
 
 const ip = CONST.ipOut;
 class App extends Component {
+  
   constructor() {
     super();
-    this.state = {
+    this.emptyState = {
       "wallet": "",
       "publicKey": "",
       "privatKey": "",
@@ -24,8 +25,7 @@ class App extends Component {
       "unconfirmedBalance": "",
       "txId": "",
       "mnemonic": "",
-      "receiveAddress": [],
-      "sendAddress": [],
+      "activeAddresses": [],
       "root": "",
       "lastReceiveAddress": 0,
       "lastSendAddress": 0,
@@ -34,6 +34,7 @@ class App extends Component {
       "countUtxo": 0,
       "newAddressReceive": ""
     };
+    this.state = this.emptyState;
     this.generateAddress = this.generateAddress.bind(this);
     this.registerMnemonic = this.registerMnemonic.bind(this);
     this.sendBTC = this.sendBTC.bind(this);
@@ -137,27 +138,17 @@ class App extends Component {
 
   getTransactions() {
     this.setState({
+      "newAddressReceive": "spin",
       "transactions": []
+    }, () => {
+      getTransactionsModule((pathDerive) => {
+        return this.state.root.derivePath(pathDerive).getAddress()
+      }, (data) => {
+        this.setState(data);
+      });
     })
-    getTransactionsModule((pathDerive) => {
-      return this.state.root.derivePath(pathDerive).getAddress()
-    }, (data) => {
-      this.setState(data);
-    });
+   
   }
-  // getTrans(address, cb) {
-  //   const stringGetTrans = ip + "/txs/?address=" + address;
-  //   let res = 0;
-  //   fetch(stringGetTrans)
-  //     .then((res) => {
-  //       return res.json();
-  //     }).then((utxoArr) => {
-  //       if (utxoArr.txs.length) {
-  //         cb(true);
-  //       }
-  //       cb(false);
-  //     })
-  // }
 
   getFullUtxo() {
     this.setState({
@@ -246,16 +237,13 @@ class App extends Component {
                 mnemonic={this.state.mnemonic}
                 newAddressReceive={this.state.newAddressReceive}
                 sendAddress={this.state.sendAddress}
-                generateReceiveAddress={this.generateReceiveAddress}
-                generateSendAddress={this.generateSendAddress}
+                activeAddresses={this.state.activeAddresses}
               />
             </div>
             <div className="info">
               <Info
                 transactions={this.state.transactions}
                 utxo={this.state.utxo}
-                getUtxo={this.getFullUtxo}
-                getTransactions={this.getTransactions}
               />
             </div>
             <div className="sender">

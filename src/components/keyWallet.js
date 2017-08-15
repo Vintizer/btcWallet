@@ -1,8 +1,21 @@
 import React, { Component } from 'react';
 import './keyWallet.css';
+import Spinner from 'spin.js';
 
 class KeyWallet extends Component {
+  spinner = new Spinner();
   render() {
+    let address;
+    if (this.props.newAddressReceive === "spin") {
+      console.log('spin');
+      address = "";
+      this.spinner.stop();
+      this.spinner.spin(document.getElementById('toSpin'));
+    } else {
+      console.log('not spin');
+      address = this.props.newAddressReceive;
+      this.spinner.stop();
+    }
     if (!this.props.mnemonic) {
       this.props.generateAddress();
     }
@@ -16,18 +29,14 @@ class KeyWallet extends Component {
           Текущиq HDключ, с которым ведется работа <br />
           Мнемофраза: <label className="mnemo">{this.props.mnemonic}</label> <br />
         </div>
-        <button onClick={this.props.generateReceiveAddress}> Получить адрес на получение </button> <br />
-        <button onClick={this.props.generateSendAddress}> Получить адрес на отправку </button>
 
-        <div>
-          Текущие адреса на получение:
-          <div>
-            <p className="address">!!-{this.props.newAddressReceive}</p>
-          </div>
+
+        <div id="toSpin">
+          {this.props.newAddressReceive === "spin" ? "" : `Адрес для получения - ${this.props.newAddressReceive}`}
         </div>
         <div>
           Текущие адреса:
-          {this.props.sendAddress.map((address, index) => {
+          {this.props.activeAddresses.map((address, index) => {
             return (
               <div key={index}>
                 <p className="address">{address}:</p>
