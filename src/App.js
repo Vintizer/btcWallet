@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import CONST from "./constants/const.json";
+import testData from "./constants/testData.json";
 import jQuery from "jquery";
 import lightTabsFunction from "./scripts/lightTabs";
 import KeyWallet from "./components/keyWallet";
@@ -11,10 +12,11 @@ import Mnemonic from "bitcore-mnemonic";
 import axios from "axios";
 import getUtxo from "./scripts/getUtxo";
 import getTransactionsModule from "./scripts/gettransactions";
+import sendBTCScript from "./scripts/sendBTC";
 
 const ip = CONST.ipOut;
 class App extends Component {
-  
+
   constructor() {
     super();
     this.emptyState = {
@@ -30,9 +32,11 @@ class App extends Component {
       "lastReceiveAddress": 0,
       "lastSendAddress": 0,
       "transactions": [],
+      "curTransactions": [],
       "utxo": "",
       "countUtxo": 0,
-      "newAddressReceive": ""
+      "newAddressReceive": "",
+      "maxIndex": 0
     };
     this.state = this.emptyState;
     this.generateAddress = this.generateAddress.bind(this);
@@ -88,52 +92,8 @@ class App extends Component {
       txSatoshi
     };
   }
-  getFee() {
-    return 1000;
-  }
-  baseAmount() {
-    return 1500;
-  }
-  send(utxoArr, addressTo, amountToSend, addrMyFirstUnused) {
-    if (!amountToSend || !addressTo) {
-      return;
-    }
-    const { txResArr, txSatoshi } = this.getUtxoArr(utxoArr, amountToSend);
-    const network = bitcoin.networks[CONST.network];
-    const tx = new bitcoin.TransactionBuilder(network);
-    txResArr.forEach((e) => {
-      tx.addInput(e, 0);
-    })
-    const fee = this.getFee();
-    const baseAmount = this.baseAmount();
-    tx.addOutput(addressTo, parseFloat(amountToSend));
-    // if (txSatoshi - fee - amountToSend > baseAmount){
-    //   tx.addOutput(addrMyFirstUnused, parseFloat(txSatoshi - fee - amountToSend));  
-    // }
-    // tx.addOutput(addressTo, parseFloat(amountToSend));
-
-    // var keyPair = bitcoin.ECPair.fromWIF(this.state.privatKey, network);
-
-    // tx.sign(0, keyPair);
-    // const hexTxId = { "rawtx": tx.build().toHex() };
-    // axios.post(ip + "/tx/send", hexTxId)
-    //   .then(function (response) {
-    //     that.setState({
-    //       "txId": response.data.txid
-    //     })
-    //   })
-  }
   sendBTC() {
-    var addressTo = document.getElementById('send_address').value;
-    var amoutToSend = document.getElementById('send_BTC').value;
-    const addr = this.findFirstUnused();
-    var stringGetUtxo = ip + "/addr/" + addr + "/utxo";
-    fetch(stringGetUtxo)
-      .then((res) => {
-        return res.json();
-      }).then((val) => {
-        this.send(val, addressTo, amoutToSend, addr);
-      })
+    sendBTCScript(this.state.curTransactions, this.state.newAddressReceive);
   }
 
   getTransactions() {
@@ -145,9 +105,9 @@ class App extends Component {
         return this.state.root.derivePath(pathDerive).getAddress()
       }, (data) => {
         this.setState(data);
+        this.getDataForSend();
       });
     })
-   
   }
 
   getFullUtxo() {
@@ -205,6 +165,45 @@ class App extends Component {
     const seedFraze = new Mnemonic(Mnemonic.Words.ENGLISH).toString();
     this.mnemonicRegister(seedFraze);
   };
+
+  getKeyPairForAddress(addr) {
+    const maxIndex = this.state.maxIndex;
+    for (let i = 0; i < maxIndex; i++) {
+      let pathDerive = "m/44'/1'/0'/0/" + i;
+      const curAddr = this.state.root.derivePath(pathDerive).getAddress();
+      if (curAddr === addr) {
+        return this.state.root.derivePath(pathDerive).keyPair;
+      }
+    }
+    return false;
+  }
+
+  getDataForSend() {
+    console.log('getDataForSend');
+    const transactions = this.state.transactions;
+    // const transactions = testData.items;
+    const addresses = this.state.activeAddresses;
+    const curTransactions = [];
+    transactions.forEach((tx) => {
+      const vOut = tx.vout;
+      const txId = tx.txid;
+      vOut.forEach((out) => {
+        const curAddr = out.scriptPubKey.addresses[0];
+        if (this.getKeyPairForAddress(curAddr)) {
+          curTransactions.push({
+            txId,
+            keyPair: this.getKeyPairForAddress(curAddr),
+            volBTC: out.value
+          })
+        }
+      })
+    })
+    this.setState({
+      curTransactions
+    }, () => {
+      console.log(this.state.curTransactions);
+    })
+  }
   registerMnemonic() {
     const seedFraze = document.getElementById('mnemonic').value.trim();
     if (seedFraze !== this.state.mnemonic) {

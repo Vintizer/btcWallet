@@ -2,8 +2,6 @@ import axios from "axios";
 import CONST from "../constants/const.json";
 
 const test20address = (rootFn, cb) => {
-    let res = 0;
-    let transCount = 0;
     let sumAddress = [];
 
     for (let i = 20 * (gen - 1); i < 20 * gen; i++) {
@@ -48,7 +46,7 @@ const getNewAddress = (addresses, cb) => {
             }).then((data) => {
                 arrResult[ind] = data.txs.length;
                 if (data.txs.length > 0) {
-                   usedAdresses += e + ","; 
+                    usedAdresses += e + ",";
                 }
                 let arrCount = 0;
                 arrResult.forEach((e) => {
@@ -65,9 +63,23 @@ const getNewAddress = (addresses, cb) => {
                             newAddressIndex = 20 * (gen);
                         }
                     })
-                    cb(newAddressIndex, usedAdresses);
+                    cb(newAddressIndex, usedAdresses, 20 * (gen - 1));
                 }
             })
+    });
+}
+const runCb = (addresses, res, rootFn, cb) => {
+    getNewAddress(addresses, (addrIndex, usedAdresses, maxIndex) => {
+        const pathDerive = "m/44'/1'/0'/0/" + addrIndex;
+        const address = rootFn(pathDerive);
+        const usedAdressesRes = usedAdresses.split(",").slice(0, usedAdresses.split(",").length - 1);
+        gen = 1;
+        cb({
+            "transactions": res.data.items,
+            "newAddressReceive": address,
+            "activeAddresses": usedAdressesRes,
+            "maxIndex": maxIndex
+        })
     });
 }
 const getTransactions = (rootFn, cb) => {
@@ -82,29 +94,10 @@ const getTransactions = (rootFn, cb) => {
                             "to": response.data.totalItems
                         })
                             .then((res) => {
-                                getNewAddress(addresses, (addrIndex, usedAdresses) => {
-                                    const pathDerive = "m/44'/1'/0'/0/" + addrIndex;
-                                    const address = rootFn(pathDerive);
-                                    gen = 1;
-                                    cb({
-                                        "transactions": res.data.items,
-                                        "newAddressReceive": address,
-                                        "activeAddresses": usedAdresses.split(",")
-                                    })
-                                });
-
+                                runCb(addresses, res, rootFn, cb);
                             })
                     } else {
-                        getNewAddress(addresses, (addrIndex, usedAdresses) => {
-                            const pathDerive = "m/44'/1'/0'/0/" + addrIndex;
-                            const address = rootFn(pathDerive);
-                            gen = 1;
-                            cb({
-                                "transactions": response.data.items,
-                                "newAddressReceive": address,
-                                "activeAddresses": usedAdresses.split(",")
-                            })
-                        });
+                        runCb(addresses, response, rootFn, cb);
                     }
                 })
         } else {
