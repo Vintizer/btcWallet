@@ -104,8 +104,7 @@ class App extends Component {
       getTransactionsModule((pathDerive) => {
         return this.state.root.derivePath(pathDerive).getAddress()
       }, (data) => {
-        this.setState(data);
-        this.getDataForSend();
+        this.setState(data, this.getDataForSend);
       });
     })
   }
@@ -163,45 +162,64 @@ class App extends Component {
   }
   generateAddress() {
     const seedFraze = new Mnemonic(Mnemonic.Words.ENGLISH).toString();
-    this.mnemonicRegister(seedFraze);
-  };
 
+    // TODO
+    this.mnemonicRegister("mechanic session device cram device dress face point novel trash chef earth");
+    // this.mnemonicRegister(seedFraze);
+  };
   getKeyPairForAddress(addr) {
-    const maxIndex = this.state.maxIndex;
-    for (let i = 0; i < maxIndex; i++) {
-      let pathDerive = "m/44'/1'/0'/0/" + i;
-      const curAddr = this.state.root.derivePath(pathDerive).getAddress();
-      if (curAddr === addr) {
-        return this.state.root.derivePath(pathDerive).keyPair;
+    const thisWalletAddresses = this.state.thisWalletAddresses;
+    const length = thisWalletAddresses.length;
+    for (let i = 0; i < length; i++) {
+      if (thisWalletAddresses[i] === addr) {
+        return this.state.thisWalletKeyPairs[i];
       }
     }
     return false;
   }
-
-  getDataForSend() {
-    console.log('getDataForSend');
-    const transactions = this.state.transactions;
-    // const transactions = testData.items;
-    const addresses = this.state.activeAddresses;
-    const curTransactions = [];
-    transactions.forEach((tx) => {
-      const vOut = tx.vout;
-      const txId = tx.txid;
-      vOut.forEach((out) => {
-        const curAddr = out.scriptPubKey.addresses[0];
-        if (this.getKeyPairForAddress(curAddr)) {
-          curTransactions.push({
-            txId,
-            keyPair: this.getKeyPairForAddress(curAddr),
-            volBTC: out.value
-          })
-        }
+  addThisWalletAddresses(cb) {
+    if (!this.state.thisWalletAddresses) {
+      const thisWalletAddresses = [];
+      const thisWalletKeyPairs = [];
+      for (let i = 0; i < this.state.maxIndex; i++) {
+        let pathDerive = "m/44'/1'/0'/0/" + i;
+        thisWalletAddresses.push(this.state.root.derivePath(pathDerive).getAddress());
+        thisWalletKeyPairs.push(this.state.root.derivePath(pathDerive).keyPair);
+      }
+      this.setState({
+        thisWalletAddresses,
+        thisWalletKeyPairs
+      }, () => {
+        cb();
       })
-    })
-    this.setState({
-      curTransactions
-    }, () => {
-      console.log(this.state.curTransactions);
+    } else {
+      cb();
+    }
+  }
+  getDataForSend() {
+    this.addThisWalletAddresses(() => {
+      const transactions = this.state.transactions;
+      const curTransactions = [];
+      transactions.forEach((tx) => {
+        const vOut = tx.vout;
+        const txId = tx.txid;
+        vOut.forEach((out) => {
+          const curAddr = out.scriptPubKey.addresses[0];
+          const addrPair = this.getKeyPairForAddress(curAddr);
+          if (addrPair) {
+            curTransactions.push({
+              txId,
+              keyPair: addrPair,
+              volBTC: out.value
+            })
+          }
+        })
+      })
+      this.setState({
+        curTransactions
+      }, () => {
+        console.log("curTransactions", this.state.curTransactions);
+      })
     })
   }
   registerMnemonic() {

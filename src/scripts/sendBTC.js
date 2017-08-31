@@ -10,12 +10,17 @@ const baseAmount = () => {
 }
 
 const send = (txArr, addressTo, amountToSend, newAddressReceive) => {
+    console.log('txArrSendFunction');
+    console.log('txArr', txArr);
     if (!amountToSend || !addressTo) {
         return;
     }
-
+    console.log('amountToSend', amountToSend);
+    console.log('parseFloat(amountToSend)', parseFloat(amountToSend));
     const network = bitcoin.networks[CONST.network];
     const tx = new bitcoin.TransactionBuilder(network);
+    console.log('preFail');
+    // TODO
     tx.addOutput(addressTo, parseFloat(amountToSend));
     let amountISend = 0;
     txArr.forEach(function (e) {
@@ -50,11 +55,10 @@ const send = (txArr, addressTo, amountToSend, newAddressReceive) => {
 }
 
 const getTxVol = (txArr) => {
+    console.log('txArr', txArr);
     let res = 0;
     for (let i = 0; i < txArr.length; i++) {
-        console.log(txArr[i]);
-        console.log(txArr[i].volBTC);
-        console.log(parseInt(txArr[i].volBTC * 100000000, 10));
+        console.log('i', i);
         res += parseInt(txArr[i].volBTC * 100000000, 10);
     }
     return res;
@@ -63,25 +67,22 @@ const getTxVol = (txArr) => {
 const getSendId = (addrArr, amountToSend, txArr = []) => {
     const fee = getFee();
     const length = addrArr.length;
-    const rand = Math.round(0.5 + Math.random() * length);
-    // const rand = 1;
-    console.log(addrArr);
-    console.log('rand', rand);
+    const rand = Math.round(0.5 + Math.random() * length) - 1;
     txArr.push(addrArr[rand]);
-    const addrArrNew = addrArr.slice(0, rand);
-    addrArrNew.concat(addrArr.slice(rand + 1))
-    console.log('txArr', txArr);
-    console.log('amountToSend + fee', amountToSend + fee);
-    console.log('getTxVol(txArr)', getTxVol(txArr));
+    const arr1st = addrArr.slice(0, rand);
+    const arr2st = addrArr.slice(rand + 1);
+    const addrArrNew = arr1st.concat(arr2st);
     if (getTxVol(txArr) <= +amountToSend + fee) {
-        getSendId(addrArrNew, amountToSend, txArr);
+        return getSendId(addrArrNew, amountToSend, txArr);
     } else {
+        console.log('txArrInElse', txArr);
         return txArr;
     }
 }
 export default function (addrArr, newAddressReceive) {
-    console.log('addrArr', addrArr);
     var addressTo = document.getElementById('send_address').value;
     var amoutToSend = parseInt(document.getElementById('send_BTC').value, 10);
-    send(getSendId(addrArr, amoutToSend), addressTo, amoutToSend, newAddressReceive);
+    const txArr = getSendId(addrArr, amoutToSend);
+    console.log('txArrDefault', txArr);
+    send(txArr, addressTo, amoutToSend, newAddressReceive);
 }
