@@ -34,25 +34,19 @@ const send = (txArr, addressTo, amountToSend, newAddressReceive) => {
     window.txArr = txArr;
     txArr.forEach((e, i) => {
         tx.addInput(e.txId, e.n);
-        // tx.sign(i, e.keyPair);
     })
     txArr.forEach((e, i) => {
-        // tx.addInput(e.txId, e.n);
         tx.sign(i, e.keyPair);
     })
     console.log('toHex');
     console.log(tx.build().toHex());
     // Отправки
 
-    // var keyPair = bitcoin.ECPair.fromWIF(this.state.privatKey, network);
 
     const hexTxId = { "rawtx": tx.build().toHex() };
     axios.post(ip + "/tx/send", hexTxId)
       .then(function (response) {
           console.log('response', response);
-        // that.setState({
-        //   "txId": response.data.txid
-        // })
       })
 }
 
