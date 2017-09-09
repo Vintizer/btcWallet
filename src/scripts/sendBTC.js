@@ -1,5 +1,6 @@
 import CONST from "../constants/const.json";
 import bitcoin from "bitcoinjs-lib";
+import axios from "axios";
 
 const ip = CONST.ipOut;
 const getFee = () => {
@@ -10,18 +11,14 @@ const baseAmount = () => {
 }
 
 const send = (txArr, addressTo, amountToSend, newAddressReceive) => {
-    console.log('txArrSendFunction');
     console.log('txArr', txArr);
     if (!amountToSend || !addressTo) {
         return;
     }
-    console.log('amountToSend', amountToSend);
-    console.log('parseFloat(amountToSend)', parseFloat(amountToSend));
     const network = bitcoin.networks[CONST.network];
     const tx = new bitcoin.TransactionBuilder(network);
-    console.log('preFail');
     // TODO
-    tx.addOutput(addressTo, parseFloat(amountToSend));
+    tx.addOutput(addressTo, parseInt(amountToSend));
     let amountISend = 0;
     txArr.forEach(function (e) {
         amountISend += e.volBTC * 100000000;
@@ -30,14 +27,18 @@ const send = (txArr, addressTo, amountToSend, newAddressReceive) => {
     let refund;
     if (amountISend - getFee() - amountToSend > baseAmount()) {
         refund = amountISend - getFee() - amountToSend;
-        tx.addOutput(newAddressReceive, parseFloat(refund));
+        tx.addOutput(newAddressReceive, parseInt(refund));
     }
 
     // Подписи
-
-    txArr.forEach((e) => {
-        tx.addInput(e.txId, 0);
-        tx.sign(0, e.keyPair);
+    window.txArr = txArr;
+    txArr.forEach((e, i) => {
+        tx.addInput(e.txId, e.n);
+        // tx.sign(i, e.keyPair);
+    })
+    txArr.forEach((e, i) => {
+        // tx.addInput(e.txId, e.n);
+        tx.sign(i, e.keyPair);
     })
     console.log('toHex');
     console.log(tx.build().toHex());
@@ -45,13 +46,14 @@ const send = (txArr, addressTo, amountToSend, newAddressReceive) => {
 
     // var keyPair = bitcoin.ECPair.fromWIF(this.state.privatKey, network);
 
-    // const hexTxId = { "rawtx": tx.build().toHex() };
-    // axios.post(ip + "/tx/send", hexTxId)
-    //   .then(function (response) {
-    //     that.setState({
-    //       "txId": response.data.txid
-    //     })
-    //   })
+    const hexTxId = { "rawtx": tx.build().toHex() };
+    axios.post(ip + "/tx/send", hexTxId)
+      .then(function (response) {
+          console.log('response', response);
+        // that.setState({
+        //   "txId": response.data.txid
+        // })
+      })
 }
 
 const getTxVol = (txArr) => {

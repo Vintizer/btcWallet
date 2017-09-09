@@ -200,6 +200,7 @@ class App extends Component {
     this.addThisWalletAddresses(() => {
       const transactions = this.state.transactions;
       const curTransactions = [];
+      console.log('transactions', transactions);
       transactions.forEach((tx) => {
         const vOut = tx.vout;
         const txId = tx.txid;
@@ -210,7 +211,8 @@ class App extends Component {
             curTransactions.push({
               txId,
               keyPair: addrPair,
-              volBTC: out.value
+              volBTC: out.value,
+              n: out.n
             })
           }
         })
