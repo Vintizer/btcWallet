@@ -8,9 +8,6 @@ import CONST from "./constants/const.json";
 import './App.css';
 import axios from "axios";
 
-// Адрес кошелька: n3SLphtGp3GwrTsLC2ZFH6XH3sHtixvziH 
-// Публичный ключ: 217013213619915422249847127520109904218256571481116785301751618624910810123678123 
-// Приватный ключ: cS9NhbNJU3ArPKSGghMnvojxcSBr5jJbRjVV6u8qod8WbYC8uLvi 
 const ip = CONST.ipOut;
 // const ip = CONST.ipLocal;
 class App extends Component {
