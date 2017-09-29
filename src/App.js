@@ -9,6 +9,12 @@ import './App.css';
 import axios from "axios";
 
 const ip = CONST.ipOut;
+const getFee = () => {
+  return 1000;
+}
+const baseAmount = () => {
+  return 1500;
+}
 // const ip = CONST.ipLocal;
 class App extends Component {
   constructor() {
@@ -77,7 +83,6 @@ class App extends Component {
     var inpArrAmount = [];
     var inpArrId = [];
     utxoArr.forEach((e) => {
-      // console.log(e);
       inpArrAmount.push(e.satoshis);
       inpArrId.push(e.txid);
     });
@@ -87,16 +92,23 @@ class App extends Component {
     console.log(inpArrAmount)
     inpArrAmount.forEach((e, i) => {
       if (sumAmount < amountToSend) {
+        console.log(e);
         sumAmount += e;
         txResArr.push(inpArrId[i]);
       }
     })
-
     var tx = new bitcoin.TransactionBuilder(network);
+    let refund;
+    if (sumAmount - getFee() - amountToSend > baseAmount()) {
+        refund = sumAmount - getFee() - amountToSend;
+        console.log('refund',this.state.wallet);
+        tx.addOutput(this.state.wallet, parseInt(refund));
+    }
     console.log(txResArr);
     txResArr.forEach((e) => {
       tx.addInput(e, 0);
     })
+    console.log('addressTo', addressTo);
     tx.addOutput(addressTo, parseFloat(amountToSend));
     var keyPair = bitcoin.ECPair.fromWIF(this.state.privatKey, network);
     tx.sign(0, keyPair);
@@ -110,20 +122,20 @@ class App extends Component {
         console.log("axios");
         console.log(response);
       })
-    // fetch(ip + "/tx/send", {
-    //   method: 'post',
-    //   body: hexTxId
-    // })
-    //   .then((res) => {
-    //     that.setState({
-    //       "txId": res.statusText
-    //     })
-    // // return res.json();
-    // })
-    // .then((val) => {
-    //   console.log(val);
-    //   this.state.txId = val;
-    // })
+    fetch(ip + "/tx/send", {
+      method: 'post',
+      body: hexTxId
+    })
+      .then((res) => {
+        that.setState({
+          "txId": res.statusText
+        })
+    // return res.json();
+    })
+    .then((val) => {
+      console.log(val);
+      this.state.txId = val;
+    })
   }
   sendBTC() {
     var addressTo = document.getElementById('send_address').value;
