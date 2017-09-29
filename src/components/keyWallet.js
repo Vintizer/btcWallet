@@ -7,12 +7,10 @@ class KeyWallet extends Component {
   render() {
     let address;
     if (this.props.newAddressReceive === "spin") {
-      console.log('spin');
       address = "";
       this.spinner.stop();
       this.spinner.spin(document.getElementById('toSpin'));
     } else {
-      console.log('not spin');
       address = this.props.newAddressReceive;
       this.spinner.stop();
     }
@@ -23,7 +21,9 @@ class KeyWallet extends Component {
     return (
       <div>
         <button onClick={this.props.generateAddress}> Создать ключи </button> <br />
-        <textarea rows="3" cols="45" placeholder="privat key Mnemonic" id="mnemonic" value="mechanic session device cram device dress face point novel trash chef earth" /> <br />
+        <textarea rows="3" cols="45" placeholder="privat key Mnemonic" id="mnemonic"/> <br />
+        <span>Например мнемоник с монетами</span><br />
+        <span><b>mechanic session device cram device dress face point novel trash chef earth</b></span> <br />
         <button onClick={this.props.registerMnemonic}> Работать с "мнемоником" введенным вручную </button>
         <div>
           Текущиq HDключ, с которым ведется работа <br />
