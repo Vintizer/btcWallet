@@ -36,7 +36,8 @@ class App extends Component {
       "utxo": "",
       "countUtxo": 0,
       "newAddressReceive": "",
-      "maxIndex": 0
+      "maxIndex": 0,
+      "thisWalletAddresses": []
     };
     this.state = this.emptyState;
     this.generateAddress = this.generateAddress.bind(this);
@@ -93,7 +94,10 @@ class App extends Component {
     };
   }
   sendBTC() {
-    sendBTCScript(this.state.curTransactions, this.state.newAddressReceive);
+    const that = this;
+    sendBTCScript(this.state.curTransactions, this.state.newAddressReceive, (txid) => {
+      that.setState({txId:txid});
+    });
   }
 
   getTransactions() {
@@ -164,11 +168,12 @@ class App extends Component {
     const seedFraze = new Mnemonic(Mnemonic.Words.ENGLISH).toString();
 
     // TODO
-    this.mnemonicRegister("mechanic session device cram device dress face point novel trash chef earth");
-    // this.mnemonicRegister(seedFraze);
+    // this.mnemonicRegister("mechanic session device cram device dress face point novel trash chef earth");
+    this.mnemonicRegister(seedFraze);
   };
   getKeyPairForAddress(addr) {
     const thisWalletAddresses = this.state.thisWalletAddresses;
+    console.log('thisWalletAddresses', thisWalletAddresses);
     const length = thisWalletAddresses.length;
     for (let i = 0; i < length; i++) {
       if (thisWalletAddresses[i] === addr) {
@@ -178,9 +183,10 @@ class App extends Component {
     return false;
   }
   addThisWalletAddresses(cb) {
-    if (!this.state.thisWalletAddresses) {
+    if (!this.state.thisWalletAddresses.length) {
       const thisWalletAddresses = [];
       const thisWalletKeyPairs = [];
+      console.log('maxIndex', this.state.maxIndex);
       for (let i = 0; i < this.state.maxIndex; i++) {
         let pathDerive = "m/44'/1'/0'/0/" + i;
         thisWalletAddresses.push(this.state.root.derivePath(pathDerive).getAddress());
@@ -197,6 +203,7 @@ class App extends Component {
     }
   }
   getDataForSend() {
+    console.log('getDataForSend');
     this.addThisWalletAddresses(() => {
       const transactions = this.state.transactions;
       const curTransactions = [];
@@ -226,7 +233,7 @@ class App extends Component {
   }
   registerMnemonic() {
     const seedFraze = document.getElementById('mnemonic').value.trim();
-    if (seedFraze !== this.state.mnemonic) {
+    if (seedFraze && seedFraze !== this.state.mnemonic) {
       this.mnemonicRegister(seedFraze);
     }
   }

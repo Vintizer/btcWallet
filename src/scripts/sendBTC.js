@@ -15,6 +15,7 @@ const send = (txArr, addressTo, amountToSend, newAddressReceive) => {
     if (!amountToSend || !addressTo) {
         return;
     }
+    addressTo = addressTo.trim();
     const network = bitcoin.networks[CONST.network];
     const tx = new bitcoin.TransactionBuilder(network);
     // TODO
@@ -46,7 +47,11 @@ const send = (txArr, addressTo, amountToSend, newAddressReceive) => {
     const hexTxId = { "rawtx": tx.build().toHex() };
     axios.post(ip + "/tx/send", hexTxId)
       .then(function (response) {
-          console.log('response', response);
+
+
+
+
+          console.log('response', response.data.txid);
       })
 }
 
