@@ -10,7 +10,7 @@ const baseAmount = () => {
     return 1500;
 }
 
-const send = (txArr, addressTo, amountToSend, newAddressReceive) => {
+const send = (txArr, addressTo, amountToSend, newAddressReceive, cb) => {
     console.log('txArr', txArr);
     if (!amountToSend || !addressTo) {
         return;
@@ -46,13 +46,9 @@ const send = (txArr, addressTo, amountToSend, newAddressReceive) => {
 
     const hexTxId = { "rawtx": tx.build().toHex() };
     axios.post(ip + "/tx/send", hexTxId)
-      .then(function (response) {
-
-
-
-
-          console.log('response', response.data.txid);
-      })
+        .then(function (response) {
+            cb(response.data.txid);
+        })
 }
 
 const getTxVol = (txArr) => {
@@ -80,10 +76,10 @@ const getSendId = (addrArr, amountToSend, txArr = []) => {
         return txArr;
     }
 }
-export default function (addrArr, newAddressReceive) {
+export default function (addrArr, newAddressReceive, cb) {
     var addressTo = document.getElementById('send_address').value;
     var amoutToSend = parseInt(document.getElementById('send_BTC').value, 10);
     const txArr = getSendId(addrArr, amoutToSend);
     console.log('txArrDefault', txArr);
-    send(txArr, addressTo, amoutToSend, newAddressReceive);
+    send(txArr, addressTo, amoutToSend, newAddressReceive, cb);
 }
